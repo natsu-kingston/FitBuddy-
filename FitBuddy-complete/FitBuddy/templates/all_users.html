@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-heading">
+    <span class="eyebrow">ADMIN VIEW</span>
+    <h1>All users and plans</h1>
+    <p>{{ users|length }} saved profile(s).</p>
+</section>
+
+{% if not users %}
+<section class="card empty">
+    <h2>No users yet</h2>
+    <p>Create your first FitBuddy plan from the home page.</p>
+</section>
+{% else %}
+<div class="admin-list">
+{% for user in users %}
+    <article class="card admin-card">
+        <div class="admin-header">
+            <div>
+                <h2>{{ user.username }}</h2>
+                <p><strong>ID:</strong> {{ user.user_id }} · {{ user.age }} years · {{ user.weight }} kg</p>
+                <p><strong>Goal:</strong> {{ user.goal|title }} · <strong>Intensity:</strong> {{ user.intensity|title }}</p>
+            </div>
+            <form action="/api/users/{{ user.user_id }}" method="post" onsubmit="return deleteUser(event, '{{ user.user_id }}')">
+                <button class="button danger" type="submit">Delete</button>
+            </form>
+        </div>
+
+        <details>
+            <summary>Original plan</summary>
+            <pre>{{ user.original_plan }}</pre>
+        </details>
+
+        {% if user.updated_plan %}
+        <details open>
+            <summary>Updated plan</summary>
+            <pre>{{ user.updated_plan }}</pre>
+        </details>
+        <p><strong>Feedback:</strong> {{ user.feedback }}</p>
+        {% endif %}
+    </article>
+{% endfor %}
+</div>
+{% endif %}
+
+<script>
+async function deleteUser(event, userId) {
+    event.preventDefault();
+    if (!confirm(`Delete user ${userId}?`)) return false;
+
+    const response = await fetch(`/api/users/${encodeURIComponent(userId)}`, {
+        method: "DELETE"
+    });
+
+    if (response.ok) {
+        window.location.reload();
+    } else {
+        const data = await response.json().catch(() => ({}));
+        alert(data.detail || "Unable to delete user.");
+    }
+    return false;
+}
+</script>
+{% endblock %}
